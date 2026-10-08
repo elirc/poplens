@@ -28,7 +28,7 @@ shared contracts. This file tracks waves and integration state.
 | A3 | agents/A3-maps-tiles.md | GeoJSON/MVT routes + map explorer |
 | A4 | agents/A4-profiles-search.md | home, place profiles, indicator pages, search |
 
-## Wave 2 (parallel Opus agents, after wave-1 integration)
+## Wave 2 (parallel Opus agents — LAUNCHED 2026-10-08, after wave-1 gates green)
 
 | Agent | Brief | Area |
 | --- | --- | --- |
