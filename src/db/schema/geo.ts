@@ -7,6 +7,7 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { geomMultiPolygon, geomPoint } from "./helpers";
@@ -27,9 +28,9 @@ export const geoUnits = pgTable(
     name: text("name").notNull(),
     /** Official code, unique across all levels (e.g. NG, NG-NC, NG-KN, NG-KN-GWALE, …). */
     code: text("code").notNull(),
-    parentId: integer("parent_id").references((): any => geoUnits.id),
+    parentId: integer("parent_id").references((): AnyPgColumn => geoUnits.id),
     /** State this unit belongs to (self for states, null for nation/zone) — hot filter. */
-    stateId: integer("state_id").references((): any => geoUnits.id),
+    stateId: integer("state_id").references((): AnyPgColumn => geoUnits.id),
     boundary: geomMultiPolygon("boundary"),
     /** Pre-simplified for web delivery (ST_SimplifyPreserveTopology). */
     boundarySimplified: geomMultiPolygon("boundary_simplified"),

@@ -11,7 +11,6 @@ const connectionString =
   env.NODE_ENV === "test" ? env.TEST_DATABASE_URL : env.DATABASE_URL;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __poplensPool: Pool | undefined;
 }
 
