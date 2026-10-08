@@ -52,6 +52,10 @@ export const geoUnits = pgTable(
       sql`${t.name} gin_trgm_ops`,
     ),
     index("geo_units_boundary_gist").using("gist", t.boundary),
+    index("geo_units_boundary_simplified_gist").using(
+      "gist",
+      t.boundarySimplified,
+    ),
   ],
 );
 

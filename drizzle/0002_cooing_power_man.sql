@@ -1,0 +1,1 @@
+CREATE INDEX "geo_units_boundary_simplified_gist" ON "geo_units" USING gist ("boundary_simplified");

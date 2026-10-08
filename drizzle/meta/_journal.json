@@ -15,6 +15,13 @@
       "when": 1791476300586,
       "tag": "0001_tired_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791479983726,
+      "tag": "0002_cooing_power_man",
+      "breakpoints": true
     }
   ]
 }
