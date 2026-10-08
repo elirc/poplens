@@ -41,3 +41,16 @@ shared contracts. This file tracks waves and integration state.
 
 Integration, serial test runs (unit → db → e2e), dev-server verification of
 every page, e2e suite authoring, README completion, perf pass, commits.
+
+## Integration notes (wave 1)
+
+- A3 done: run tests/db/tiles.db.test.ts; check GeoJSON payload sizes vs
+  targets after seed; facilities route may need a required state filter at
+  GRID3 scale (perf pass); facility layers re-mount check in rendered map.
+- A4 done: run tests/db/profile-queries.db.test.ts; sitemap links
+  /data-updates — A2's page is /updates, reconcile; approved
+  getDatasetsForIndicator in profile-extra.ts (metadata, published join);
+  optional perf item: bulk getLatestValuesForPlace() to cut ~120 queries per
+  profile render; pyramid needs A1 seed with sex+ageGroup rows on pop_total.
+- GiST index on boundary_simplified added as migration 0002 (apply at
+  integration if A1's migrate didn't).
