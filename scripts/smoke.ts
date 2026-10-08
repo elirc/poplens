@@ -7,7 +7,7 @@ import "dotenv/config";
  * 3. Better Auth signup via server API (validates drizzle adapter mapping).
  * Cleans up after itself.
  */
-import { sql, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db, pool, schema } from "@/db";
 import {
   nextVersionForSeries,
@@ -17,9 +17,24 @@ import {
 import { getPublishedValue } from "@/server/indicators/queries";
 import { auth } from "@/lib/auth";
 
-async function main() {
-  // --- 1. PostGIS roundtrip
+/** Remove every smoke fixture in dependency order (safe on partial runs). */
+async function cleanup() {
+  await db.execute(sql`
+    DELETE FROM indicator_values WHERE dataset_id IN
+      (SELECT id FROM datasets WHERE series_key LIKE 'smoke-%')
+  `);
+  await db.execute(sql`DELETE FROM audit_log WHERE entity = 'dataset' AND entity_id IN
+      (SELECT id::text FROM datasets WHERE series_key LIKE 'smoke-%')`);
+  await db.execute(sql`DELETE FROM datasets WHERE series_key LIKE 'smoke-%'`);
+  await db.execute(sql`DELETE FROM indicators WHERE code LIKE 'smoke_ind_%'`);
+  await db.execute(sql`DELETE FROM sources WHERE key LIKE 'smoke-%'`);
   await db.execute(sql`DELETE FROM geo_units WHERE code LIKE 'SMOKE-%'`);
+  await db.execute(sql`DELETE FROM users WHERE email LIKE 'smoke-%@poplens.local'`);
+}
+
+async function main() {
+  await cleanup();
+  // --- 1. PostGIS roundtrip
   await db.execute(sql`
     INSERT INTO geo_units (level, name, code, boundary, boundary_simplified, centre, area_sq_km)
     VALUES ('state', 'Smoke State', 'SMOKE-ST',
@@ -117,13 +132,7 @@ async function main() {
   if (!res.user?.id) throw new Error("signup failed");
   console.log("better-auth signup OK", res.user.id);
 
-  // cleanup
-  await db.execute(sql`DELETE FROM indicator_values WHERE dataset_id IN (${d1.id}, ${d2.id})`);
-  await db.execute(sql`DELETE FROM datasets WHERE series_key = ${seriesKey}`);
-  await db.delete(schema.indicators).where(eq(schema.indicators.id, ind.id));
-  await db.delete(schema.sources).where(eq(schema.sources.id, src.id));
-  await db.execute(sql`DELETE FROM geo_units WHERE code LIKE 'SMOKE-%'`);
-  await db.delete(schema.user).where(eq(schema.user.email, email));
+  await cleanup();
   console.log("SMOKE-ALL-OK");
   await pool.end();
 }

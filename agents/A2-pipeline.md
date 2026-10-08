@@ -114,3 +114,14 @@ Typecheck + lint clean; matching + validation unit tests green (run them);
 staff can (in code paths, verified by your reading + unit coverage): upload →
 review → publish → rollback; connector "Run now" works in mock mode; db tests
 written; real drivers implemented against checked docs with mapping tables.
+
+## Build-time reachability check (verified by orchestrator, 2026-10-08)
+
+All three APIs were probed successfully from this machine today:
+- DHS `GET https://api.dhsprogram.com/rest/dhs/indicators?countryIds=NG&perPage=2&f=json` → 200, JSON with TotalPages=2070.
+- WHO GHO `GET https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'NGA'&$top=1` → 200, OData JSON.
+- World Bank `GET https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.GROW?format=json&per_page=2` → 200 (note: data endpoint uses `NGA`, response countryiso3code NGA).
+Record this (and anything further you learn) in your report so the README's
+source table can state it. DHS data endpoint for values is
+`/rest/dhs/data?countryIds=NG&indicatorIds=…&breakdown=subnational` — verify
+exact parameter names against the API docs before coding.
