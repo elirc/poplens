@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: poplens_dev
+    ports:
+      - "5541:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d poplens_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "pnpm db:migrate && pnpm start"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/poplens_dev
+      APP_URL: http://localhost:3000
+      AUTH_MODE: mock
+      NODE_ENV: production
+      AUTH_SECRET: compose-demo-secret-not-for-real-use
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: pnpm worker
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/poplens_dev
+      APP_URL: http://localhost:3000
+      AUTH_MODE: mock
+      AUTH_SECRET: compose-demo-secret-not-for-real-use
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
