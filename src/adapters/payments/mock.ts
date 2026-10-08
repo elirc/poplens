@@ -36,7 +36,7 @@ export const mockPayments: PaymentsAdapter = {
     return signature === "mock-signature";
   },
 
-  async cancelSubscription(_subscriptionCode) {
+  async cancelSubscription() {
     // Nothing to do in mock mode.
   },
 };

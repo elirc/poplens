@@ -1,0 +1,51 @@
+
+> poplens@0.1.0 dev C:\Users\Owner\Desktop\poplens
+> next dev
+
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+▲ Next.js 16.4.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.1.68:3001
+- Environments: .env
+✓ Ready in 35.6s
+✓ Running next.config.ts took 2.2s
+
+○ Compiling / ...
+[2m2026-10-08T17:34:16.704Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-10-08T17:34:16.719Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+ GET / 200 in 34.4s (next.js: 14.4s, application-code: 20.0s)
+○ Compiling /explore ...
+ GET /explore 200 in 4.3s (next.js: 631ms, application-code: 3.7s)
+○ Compiling /places/[code] ...
+[2m2026-10-08T17:35:57.178Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-10-08T17:35:57.189Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+ GET /places/NG 200 in 63s (next.js: 33.9s, application-code: 29.1s)
+✓ Finished filesystem cache database compaction in 12.5s
+ GET /places/NG-KN 200 in 14.9s (next.js: 412ms, application-code: 14.5s)
+○ Compiling /indicators ...
+ GET /indicators 200 in 4.1s (next.js: 398ms, application-code: 3.7s)
+○ Compiling /indicators/[code] ...
+[2m2026-10-08T17:37:16.485Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-10-08T17:37:16.495Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-10-08T17:38:04.012Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-10-08T17:38:04.022Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+ GET /indicators/u5mr 200 in 61s (next.js: 53s, application-code: 8.1s)
+○ Compiling /about-data ...
+ GET /about-data 200 in 6.9s (next.js: 950ms, application-code: 5.9s)
+○ Compiling /api/search ...
+ GET /api/search?q=kano 200 in 7.4s (next.js: 4.1s, application-code: 3.3s)
+ GET /api/geo/values?indicator=u5mr&level=state 200 in 4.5s (next.js: 3.4s, application-code: 1011ms)
+○ Compiling /api/geo/levels/[level] ...
+ GET /api/geo/levels/state 200 in 31.4s (next.js: 30.8s, application-code: 648ms)
+○ Compiling /sitemap.xml ...
+ GET /sitemap.xml 200 in 4.1s (next.js: 2.6s, application-code: 1501ms)
+ GET / 200 in 5.1s (next.js: 85ms, application-code: 5.0s)
+ GET /api/search?q=kano 200 in 1039ms (next.js: 71ms, application-code: 968ms)
+✓ Finished filesystem cache database compaction in 10.7s
+ GET /api/tiles/wards/8/126/118 204 in 38.9s (next.js: 37.2s, application-code: 1719ms)
+ GET /api/geo/levels/lga 200 in 1922ms (next.js: 541ms, application-code: 1381ms)
+ GET /api/tiles/wards/8/133/121 200 in 2.1s (next.js: 441ms, application-code: 1642ms)
+ GET /api/tiles/wards/8/133/121 200 in 790ms (next.js: 102ms, application-code: 688ms)
+ GET /api/tiles/wards/8/133/121 200 in 434ms (next.js: 74ms, application-code: 361ms)
+[?25h
+ ELIFECYCLE  Command failed with exit code 4294967295.

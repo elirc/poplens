@@ -1,13 +1,38 @@
+import type { ConnectorKind } from "@/adapters/types";
+import { connectorRunInProgress, runConnector } from "@/server/pipeline/connectors";
 import type { JobDef } from "./types";
 
 /**
  * Connector jobs (owned by the data-pipeline area). Each run executes the
- * configured connector adapter and lands a draft dataset with a comparison
- * against the published version. Implemented in src/server/pipeline.
+ * configured connector adapter and lands a DRAFT dataset with a comparison
+ * against the published version — nothing is published automatically.
+ * Weekly crons (Africa/Lagos, see src/worker/index.ts). Enqueue on demand
+ * with enqueue('connector.dhs', { actorId }).
  */
+
+function connectorJob(kind: ConnectorKind, cron: string): JobDef {
+  return {
+    name: `connector.${kind}`,
+    cron,
+    handler: async (data) => {
+      // pg-boss is at-least-once: skip if an identical run is already going.
+      if (await connectorRunInProgress(kind)) {
+        console.log(`[connector.${kind}] a run is already in progress — skipping`);
+        return;
+      }
+      const actorId =
+        data && typeof data === "object" && typeof (data as { actorId?: unknown }).actorId === "string"
+          ? (data as { actorId: string }).actorId
+          : null;
+      const out = await runConnector(kind, actorId);
+      if (!out.ok) throw new Error(`connector.${kind} run #${out.runId} failed: ${out.error}`);
+      console.log(`[connector.${kind}] run #${out.runId} → draft dataset #${out.datasetId}`);
+    },
+  };
+}
+
 export const connectorJobs: JobDef[] = [
-  // Filled in by the pipeline implementation:
-  // { name: 'connector.dhs',       cron: '0 2 * * 0', handler: … }
-  // { name: 'connector.who',       cron: '0 3 * * 0', handler: … }
-  // { name: 'connector.worldbank', cron: '0 4 * * 0', handler: … }
+  connectorJob("dhs", "0 2 * * 0"),
+  connectorJob("who", "0 3 * * 0"),
+  connectorJob("worldbank", "0 4 * * 0"),
 ];
