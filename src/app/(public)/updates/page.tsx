@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { formatLagosDate } from "@/lib/format";
 import { listPublishedChanges } from "@/server/datasets/versioning";
+import { DownloadButtonsClient } from "@/components/content/download-buttons-client";
 import { asChangeSummary } from "@/server/pipeline/diff";
 
 /**
@@ -65,6 +66,14 @@ export default async function UpdatesPage() {
                   </p>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">No change summary recorded.</p>
+                )}
+                {c.status === "published" && (
+                  <div className="mt-2">
+                    <DownloadButtonsClient
+                      spec={{ kind: "dataset", datasetId: c.datasetId }}
+                      label="Download this dataset"
+                    />
+                  </div>
                 )}
               </li>
             );

@@ -1,0 +1,644 @@
+# PopLens public API, version 1. Hand-maintained: keep in step with
+# src/app/api/v1/** (the /docs/api page is rendered from this file).
+openapi: 3.1.0
+info:
+  title: PopLens API
+  version: "1.0.0"
+  description: "Published population and health indicators for Nigeria by place (nation, zone, state, LGA, ward), plus health facilities and weekly outbreak lines. Every value carries its source, year, estimate flag and confidence interval where the source gives one. Missing data is absent, never zero."
+servers:
+  - url: /api/v1
+    description: This PopLens instance
+security:
+  - bearerAuth: []
+  - apiKeyHeader: []
+tags:
+  - name: Places
+    description: Geography (nation, zones, states, LGAs, wards).
+  - name: Indicators
+    description: The indicator catalogue and published values.
+  - name: Facilities
+    description: Health facility locations.
+  - name: Outbreaks
+    description: Weekly outbreak lines by disease and state.
+x-poplens:
+  authentication: "Send your key as Authorization: Bearer pl_live_... (or the x-api-key header). Create keys under Account, API keys. Keys need a Pro or Organisation plan."
+  rateLimits: "Each key has a daily quota set by your plan (Pro 10,000, Organisation 50,000 requests a day, reset at midnight Africa/Lagos) and a burst limit of 60 requests a minute. Over either limit the API answers 429 with a Retry-After header. X-RateLimit-Limit and X-RateLimit-Remaining report the daily quota."
+  licensing: "Licence gate: values, facilities and outbreaks only include datasets whose source licence allows redistribution. Values held back for licence reasons are counted in meta.excludedByLicence. Synthetic demo data is flagged with dataset.isSynthetic and must not be cited."
+  envelope: "Success: { data, meta: { count, total?, page?, pageSize?, source? } }. Error: { error: { code, message } }."
+paths:
+  /places:
+    get:
+      tags: [Places]
+      summary: List places
+      description: Places ordered by level then name, 100 per page.
+      operationId: listPlaces
+      parameters:
+        - name: level
+          in: query
+          description: Restrict to one level.
+          schema:
+            type: string
+            enum: [nation, zone, state, lga, ward]
+        - name: parent
+          in: query
+          description: Code of the parent place, e.g. NG-KN for the LGAs of Kano.
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Name search (at least 2 characters).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: A page of places.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /places/{code}:
+    get:
+      tags: [Places]
+      summary: Get one place
+      operationId: getPlace
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Official place code, e.g. NG-KN.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The place.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /indicators:
+    get:
+      tags: [Indicators]
+      summary: List indicators
+      operationId: listIndicators
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [population, health_outcomes, health_services, living_conditions, outbreaks]
+      responses:
+        "200":
+          description: The indicator catalogue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /indicators/{code}:
+    get:
+      tags: [Indicators]
+      summary: Get one indicator with its coverage
+      operationId: getIndicator
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Indicator code, e.g. u5mr.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The indicator, with levels and years that have published data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /values:
+    get:
+      tags: [Indicators]
+      summary: Published indicator values
+      description: "Either one place's series (place=) or every place of a level in one year (level=, default state; year defaults to the latest year with data). Headline values only (all sexes, ages, residences). 500 per page. Licence-gated."
+      operationId: listValues
+      parameters:
+        - name: indicator
+          in: query
+          required: true
+          description: Indicator code.
+          schema:
+            type: string
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [nation, zone, state, lga, ward]
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: place
+          in: query
+          description: Place code; returns that place's values for every year (or the given year).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Values with source, CI and estimate flag.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValueList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /facilities:
+    get:
+      tags: [Facilities]
+      summary: Health facilities
+      description: 100 per page, ordered by name. Licence-gated.
+      operationId: listFacilities
+      parameters:
+        - name: lga
+          in: query
+          description: LGA code.
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: State code.
+          schema:
+            type: string
+        - name: care_level
+          in: query
+          schema:
+            type: string
+            enum: [primary, secondary, tertiary]
+        - name: ownership
+          in: query
+          schema:
+            type: string
+            enum: [public, private, faith_based, ngo, unknown]
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: A page of facilities.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /outbreaks:
+    get:
+      tags: [Outbreaks]
+      summary: Weekly outbreak lines
+      description: Newest weeks first, 200 per page. Licence-gated.
+      operationId: listOutbreaks
+      parameters:
+        - name: disease
+          in: query
+          schema:
+            type: string
+            enum: [cholera, lassa_fever, meningitis, measles]
+        - name: state
+          in: query
+          description: State code.
+          schema:
+            type: string
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: A page of weekly lines.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutbreakList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "Authorization: Bearer pl_live_<32 hex>"
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: x-api-key
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Page number, starting at 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+  responses:
+    BadRequest:
+      description: "invalid_parameter: a query parameter failed validation."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: "invalid_api_key: the key is missing or unknown."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "api_key_revoked or plan_has_no_api_access."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: "not_found: an unknown place, indicator or code."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: "burst_limit_exceeded (60 a minute) or daily_quota_exceeded. See the Retry-After header."
+      headers:
+        Retry-After:
+          description: Seconds until you may retry.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    Meta:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+          description: Rows in this response.
+        total:
+          type: integer
+          description: Rows across all pages.
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        source:
+          type: array
+          description: Sources of the rows returned.
+          items:
+            $ref: "#/components/schemas/SourceRef"
+    SourceRef:
+      type: object
+      properties:
+        key:
+          type: string
+        publisher:
+          type: string
+        title:
+          type: string
+    DatasetRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        isSynthetic:
+          type: boolean
+          description: True for synthetic demo data. Never cite these values.
+    PlaceRef:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        level:
+          type: string
+          enum: [nation, zone, state, lga, ward]
+        parent:
+          $ref: "#/components/schemas/PlaceRef"
+    PlaceDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        level:
+          type: string
+        parent:
+          $ref: "#/components/schemas/PlaceRef"
+        areaSqKm:
+          type: number
+        boundaryVersion:
+          type: string
+        centre:
+          type: object
+          properties:
+            lng:
+              type: number
+            lat:
+              type: number
+        childCount:
+          type: integer
+    PlaceList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Place"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    PlaceDetailResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/PlaceDetail"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    Indicator:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        definition:
+          type: string
+        unit:
+          type: string
+        valueType:
+          type: string
+          enum: [count, rate, percent, ratio, index]
+        higherIsBetter:
+          type: boolean
+          description: Null when neither direction is better.
+        decimals:
+          type: integer
+    IndicatorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        definition:
+          type: string
+        unit:
+          type: string
+        valueType:
+          type: string
+        methodNotes:
+          type: string
+        coverage:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: string
+              minYear:
+                type: integer
+              maxYear:
+                type: integer
+              places:
+                type: integer
+    IndicatorList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Indicator"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    IndicatorDetailResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/IndicatorDetail"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    Value:
+      type: object
+      properties:
+        indicator:
+          type: string
+        place:
+          $ref: "#/components/schemas/PlaceRef"
+        year:
+          type: integer
+        periodLabel:
+          type: string
+          description: Survey label where relevant, e.g. 2018 DHS.
+        value:
+          type: number
+        lower:
+          type: number
+          description: Lower confidence bound, null when the source gives none.
+        upper:
+          type: number
+        isEstimate:
+          type: boolean
+          description: True for modelled estimates (all current population figures).
+        note:
+          type: string
+        source:
+          $ref: "#/components/schemas/SourceRef"
+        dataset:
+          $ref: "#/components/schemas/DatasetRef"
+    ValueList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Value"
+        meta:
+          type: object
+          properties:
+            count:
+              type: integer
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            level:
+              type: string
+            year:
+              type: integer
+            excludedByLicence:
+              type: integer
+              description: Values held back because their source does not allow redistribution.
+            synthetic:
+              type: boolean
+            source:
+              type: array
+              items:
+                $ref: "#/components/schemas/SourceRef"
+    Facility:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        careLevel:
+          type: string
+          enum: [primary, secondary, tertiary]
+        ownership:
+          type: string
+        location:
+          type: object
+          properties:
+            lng:
+              type: number
+            lat:
+              type: number
+        lga:
+          $ref: "#/components/schemas/PlaceRef"
+        state:
+          $ref: "#/components/schemas/PlaceRef"
+        sourceVersion:
+          type: string
+        source:
+          $ref: "#/components/schemas/SourceRef"
+        dataset:
+          $ref: "#/components/schemas/DatasetRef"
+    FacilityList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Facility"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    Outbreak:
+      type: object
+      properties:
+        disease:
+          type: string
+        state:
+          $ref: "#/components/schemas/PlaceRef"
+        year:
+          type: integer
+        week:
+          type: integer
+          description: ISO epidemiological week, 1 to 53.
+        suspected:
+          type: integer
+        confirmed:
+          type: integer
+        deaths:
+          type: integer
+        source:
+          $ref: "#/components/schemas/SourceRef"
+        dataset:
+          $ref: "#/components/schemas/DatasetRef"
+    OutbreakList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Outbreak"
+        meta:
+          $ref: "#/components/schemas/Meta"

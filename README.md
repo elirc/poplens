@@ -104,5 +104,83 @@ steps to load the real files.
 - `src/app/` — public pages (server-rendered, revalidated), staff tools
   under `(staff)`, API v1 under `api/v1`, tiles under `api/tiles`.
 
-_(Testing, API docs, deployment and the performance notes are completed in
-the final pass.)_
+## Features
+
+- **Public**: home with national headlines + combined search; map explorer
+  (`/explore` — choropleth by indicator/year/level with quantile / equal /
+  Jenks class breaks, ward vector tiles, facility layer, table view, year
+  stepper); a profile for every state, LGA and ward (key facts, age–sex
+  pyramid, ranked indicator tiles with the national figure, trends with
+  source-change markers, facilities, outbreak history, sources used);
+  compare (≤4 places); rankings; trends; relationships (scatter + Pearson r,
+  with the correlation-is-not-causation note); facilities explorer with
+  nearest-N; area analysis (pin+radius or drawn polygon → modelled population
+  inside, facilities, LGAs touched; free accounts 3/day); outbreaks (weekly
+  map + epi curve); indicator pages; insight cards with share images;
+  stories with live charts; embeds (`/embed/chart`, `/embed/map`); `/updates`
+  data-change feed; sitemap for every place and indicator.
+- **Paid**: CSV/Excel downloads (licence-gated, cited, logged), custom PDF
+  reports (React-PDF + d3-geo maps, built by the worker), API v1 with hashed
+  keys + per-plan quotas, Paystack subscriptions (mock checkout in dev).
+- **Staff**: data editor (sources, connector runs, upload wizard with
+  place-match review, draft diff → publish → rollback, aliases, quality
+  flags); content editor (story editor + insight-card generator with
+  preview); platform admin (users/roles, orgs, plans, API usage, download
+  log, audit log).
+
+## Testing
+
+| Suite | Command | What it proves |
+| --- | --- | --- |
+| Unit (331 tests) | `pnpm test:unit` | place-name matching, upload validation, ranks, class breaks, licence gating, API-key logic, stats, parsers — pure logic, no DB |
+| DB (serial) | `pnpm test:db` | draft datasets invisible until publish; rollback restores earlier values; population inside a shape; tile SQL; API quotas; billing webhook idempotency; download licence gate |
+| End-to-end | `pnpm test:e2e` | the full spec journey: explore → LGA profile → compare → area analysis → upload+publish → publish a card → subscribe Pro (mock) → download → custom report → API call |
+
+The db project migrates and runs against `TEST_DATABASE_URL` serially (one
+shared test database). E2E needs the seeded dev DB and starts `pnpm dev`
+itself if nothing is on port 3000.
+
+## Public API
+
+Key-authenticated JSON API under `/api/v1` (places, indicators, values,
+facilities, outbreaks). Docs are rendered from `openapi/poplens-v1.yaml` at
+`/docs/api` (raw file at `/docs/api/openapi.yaml`). Keys are created in the
+account area, stored as SHA-256 hashes, burst-limited at 60/min and
+quota-limited per plan per day. Responses exclude data whose source licence
+does not allow redistribution and report the exclusion count.
+
+## Performance notes (slow-phone market)
+
+- Public pages are server-rendered with timed revalidation; the site chrome
+  lives in route-group layouts so `/embed/**` ships without it.
+- Shapes are pre-simplified in PostGIS; states GeoJSON ≈ 84 KB, LGAs ≈ 700 KB
+  (cached for an hour), wards only ever as vector tiles (LRU + HTTP cached).
+- Choropleth values travel as a small JSON array separate from shapes, so
+  stepping through years refetches numbers, not geometry.
+- Native form controls instead of heavy picker libraries; charts are
+  Recharts with table fallbacks; colour ramps are colour-blind-safe.
+
+## Deployment
+
+`docker compose up` starts db (PostGIS), web and worker; run
+`docker compose exec web pnpm seed` once. For any other host: provide
+PostgreSQL 15+ with PostGIS + pg_trgm, set the env vars from `.env.example`
+(real `AUTH_SECRET`, `AUTH_MODE=real`, real adapter drivers and keys), run
+`pnpm db:setup && pnpm db:migrate`, build with `pnpm build`, and run both
+`pnpm start` and `pnpm worker`. The app refuses to start in production with
+mock auth or the dev secret. Note: `pnpm build` prerenders public pages and
+therefore needs a reachable database.
+
+## Stack deviations from the spec (all noted during the build)
+
+- shadcn/ui components are vendored by hand in `src/components/ui/` (no CLI,
+  no Radix): native `<select>`/`<dialog>` are lighter on low-end Android.
+- Next.js 16 Cache Components mode is off — classic timed revalidation.
+- The OpenAPI docs page uses a small in-repo YAML-subset parser (no YAML
+  dependency); the spec file is hand-maintained beside the routes.
+- DHS indicators with no Nigerian API rows (HIV prevalence, household size,
+  health insurance, handwashing) come from uploads rather than the DHS
+  connector; the WHO connector supplies HIV prevalence nationally.
+- Dev on this machine runs a portable PostgreSQL 18 + PostGIS 3.6 on port
+  5541 (no Docker needed); docker-compose provides the same via
+  `postgis/postgis`.

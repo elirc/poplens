@@ -128,10 +128,16 @@ export async function getValuesForLevel(
   indicatorId: number,
   level: GeoLevel,
   year: number,
-  opts: { parentId?: number } = {},
+  opts: { parentId?: number; redistributableOnly?: boolean } = {},
 ): Promise<Array<PublicValue & { code: string; name: string }>> {
   const parentCond = opts.parentId
     ? sql`AND g.parent_id = ${opts.parentId}`
+    : sql``;
+  // Licence gate (public API): restrict to redistributable sources BEFORE the
+  // DISTINCT ON, so a place falls back to its newest allowed value instead of
+  // being dropped when its newest value has a restricted licence.
+  const licenceCond = opts.redistributableOnly
+    ? sql`AND s.allows_redistribution = true`
     : sql``;
   const res = await db.execute(sql`
     SELECT DISTINCT ON (v.geo_unit_id)
@@ -149,6 +155,7 @@ export async function getValuesForLevel(
       AND g.level = ${level}
       AND v.sex = 'all' AND v.age_group = 'all' AND v.residence = 'all'
       ${parentCond}
+      ${licenceCond}
     ORDER BY v.geo_unit_id, d.published_at DESC
   `);
   return res.rows as unknown as Array<PublicValue & { code: string; name: string }>;

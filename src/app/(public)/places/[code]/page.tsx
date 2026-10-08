@@ -11,6 +11,7 @@ import {
 } from "@/server/geo/queries";
 import { listIndicators } from "@/server/indicators/queries";
 import { StatTile } from "@/components/data/stat-tile";
+import { DownloadButtonsClient } from "@/components/content/download-buttons-client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/misc";
 import { LEVEL_LABEL, LEVEL_PLURAL, exploreHref } from "@/components/indicators/labels";
@@ -260,6 +261,13 @@ export default async function PlaceProfilePage({ params }: Params) {
           <SourcesSection unit={unit} />
         </Suspense>
       </Section>
+
+      {/* Client variant: no server session read, so the page stays cacheable;
+          the download route re-checks licence/plan and refusals link onward. */}
+      <DownloadButtonsClient
+        spec={{ kind: "place", place: unit.code }}
+        label="Download this place's indicators"
+      />
 
       <footer className="border-t border-border pt-4 text-xs text-muted-foreground">
         Boundary version: {unit.boundaryVersion ?? "not recorded"}. Population figures are

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import { SiteChrome } from "@/components/shell/site-chrome";
 
 /**
  * Staff shell: every page under (staff) requires a staff role. Individual
@@ -17,7 +18,8 @@ export default async function StaffLayout({
   const staff = ["data_editor", "content_editor", "admin"];
   if (!staff.includes(user.role)) redirect("/");
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <SiteChrome>
+      <div className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-border pb-3 text-sm">
         <span className="font-semibold">Staff</span>
         {(user.role === "data_editor" || user.role === "admin") && (
@@ -62,7 +64,8 @@ export default async function StaffLayout({
           {user.email} · {user.role.replace("_", " ")}
         </span>
       </div>
-      {children}
-    </div>
+        {children}
+      </div>
+    </SiteChrome>
   );
 }

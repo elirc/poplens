@@ -78,6 +78,11 @@ export async function getFacilitiesGeoJSONString(f: FacilityFilters): Promise<st
   if (hit) return hit;
 
   const conds: SQL[] = [];
+  // Visibility rule (same as /facilities): facilities belong to a published
+  // dataset, or predate dataset tracking (NULL).
+  conds.push(
+    sql`(f.dataset_id IS NULL OR EXISTS (SELECT 1 FROM datasets d WHERE d.id = f.dataset_id AND d.status = 'published'))`,
+  );
   if (f.stateId) conds.push(sql`f.state_id = ${f.stateId}`);
   if (f.lgaId) conds.push(sql`f.lga_id = ${f.lgaId}`);
   if (f.careLevels?.length) {

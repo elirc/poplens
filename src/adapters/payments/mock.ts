@@ -26,7 +26,9 @@ export const mockPayments: PaymentsAdapter = {
       status: "success",
       reference,
       planCode: m[1],
-      customerCode: `MOCK_CUS_${m[1]}`,
+      // Derive from the whole reference so two buyers of the same plan get
+      // distinct customer codes (B4 integration note).
+      customerCode: `MOCK_CUS_${reference.slice(-8)}`,
       subscriptionCode: `MOCK_SUB_${reference.slice(-8)}`,
       paidAt: new Date().toISOString(),
     };
