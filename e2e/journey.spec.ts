@@ -284,7 +284,7 @@ test("7–10. subscribe to Pro, download, custom report, API key", async ({ brow
   if (await reportTitle.isVisible().catch(() => false)) {
     await reportTitle.fill(`E2E report ${RUN}`);
   }
-  await page.getByRole("button", { name: /create|request|build report/i }).first().click();
+  await page.getByRole("button", { name: /build pdf report/i }).click();
   // Worker may not be running: use the inline "Build now" fallback.
   const buildNow = page.getByRole("button", { name: /build now/i }).first();
   if (await buildNow.isVisible().catch(() => false)) {

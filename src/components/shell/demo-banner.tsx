@@ -8,8 +8,13 @@ export async function DemoBanner() {
   let demo = false;
   try {
     demo = await isDemoDataLoaded();
-  } catch {
-    // Database not ready (first boot) — show nothing rather than crash.
+  } catch (e) {
+    // In production (including `next build` prerendering) a failed check
+    // must fail the render — otherwise a transient DB error bakes a page
+    // WITHOUT the legally-required synthetic-data banner into the ISR cache.
+    // ISR keeps serving the previous good page when a revalidation throws.
+    if (process.env.NODE_ENV === "production") throw e;
+    // Dev nicety: database not migrated yet — render without the banner.
     return null;
   }
   if (!demo) return null;

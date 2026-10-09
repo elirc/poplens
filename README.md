@@ -184,3 +184,7 @@ therefore needs a reachable database.
 - Dev on this machine runs a portable PostgreSQL 18 + PostGIS 3.6 on port
   5541 (no Docker needed); docker-compose provides the same via
   `postgis/postgis`.
+- `@react-pdf/hyphenate` is pnpm-patched (patches/) to add `default` export
+  conditions: the worker runs under plain Node where the package's
+  import-only exports map cannot be required; Node 22's native require(esm)
+  loads it fine once the condition exists.
