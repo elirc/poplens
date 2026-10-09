@@ -66,8 +66,12 @@ function load(): Env {
   }
   const env = parsed.data;
 
-  // Safety rails required by the spec.
-  if (env.NODE_ENV === "production") {
+  // Safety rails required by the spec: the app must refuse to START in
+  // production with mock auth. `next build` also runs with
+  // NODE_ENV=production while collecting page data — that is not serving,
+  // so the build phase is exempt.
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+  if (env.NODE_ENV === "production" && !isBuildPhase) {
     if (env.AUTH_MODE === "mock") {
       throw new Error(
         "Refusing to start: AUTH_MODE=mock is not allowed in production.",

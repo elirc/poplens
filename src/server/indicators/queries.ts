@@ -162,6 +162,62 @@ export async function getValuesForLevel(
 }
 
 /**
+ * Every published headline value for ONE place across all indicators and
+ * years (one row per indicator+year, newest dataset wins). Bulk variant of
+ * getPublishedValue for pages that show many indicators at once — a place
+ * profile resolves all its tiles from a single query.
+ */
+export async function getAllPublishedHeadlineValues(
+  geoUnitId: number,
+): Promise<Array<PublicValue & { indicatorId: number }>> {
+  const res = await db.execute(sql`
+    SELECT DISTINCT ON (v.indicator_id, v.year)
+      v.indicator_id AS "indicatorId",
+      v.value, v.lower, v.upper, v.year, v.period_label AS "periodLabel",
+      v.is_estimate AS "isEstimate", v.note, v.geo_unit_id AS "geoUnitId",
+      d.id AS "datasetId", d.title AS "datasetTitle", d.is_synthetic AS "isSynthetic",
+      s.id AS "sourceId", s.key AS "sourceKey", s.publisher AS "sourcePublisher",
+      s.title AS "sourceTitle"
+    FROM indicator_values v
+    JOIN datasets d ON d.id = v.dataset_id AND d.status = 'published'
+    JOIN sources s ON s.id = d.source_id
+    WHERE v.geo_unit_id = ${geoUnitId}
+      AND v.sex = 'all' AND v.age_group = 'all' AND v.residence = 'all'
+    ORDER BY v.indicator_id, v.year, d.published_at DESC
+  `);
+  return res.rows as unknown as Array<PublicValue & { indicatorId: number }>;
+}
+
+/**
+ * Every published headline value for all units of a sibling scope (a level,
+ * optionally under one parent) across all indicators and years. Bulk variant
+ * of getValuesForLevel used to compute all of a profile's ranks at once.
+ */
+export async function getHeadlineValuesForScope(
+  level: GeoLevel,
+  parentId?: number,
+): Promise<Array<{ indicatorId: number; geoUnitId: number; year: number; value: number }>> {
+  const parentCond = parentId ? sql`AND g.parent_id = ${parentId}` : sql``;
+  const res = await db.execute(sql`
+    SELECT DISTINCT ON (v.indicator_id, v.geo_unit_id, v.year)
+      v.indicator_id AS "indicatorId", v.geo_unit_id AS "geoUnitId",
+      v.year, v.value
+    FROM indicator_values v
+    JOIN datasets d ON d.id = v.dataset_id AND d.status = 'published'
+    JOIN geo_units g ON g.id = v.geo_unit_id AND g.level = ${level}
+    WHERE v.sex = 'all' AND v.age_group = 'all' AND v.residence = 'all'
+      ${parentCond}
+    ORDER BY v.indicator_id, v.geo_unit_id, v.year, d.published_at DESC
+  `);
+  return res.rows as unknown as Array<{
+    indicatorId: number;
+    geoUnitId: number;
+    year: number;
+    value: number;
+  }>;
+}
+
+/**
  * Trend rows for an indicator across one or more places, ordered by year.
  * Rows carry sourceId/sourceKey so the UI can break the line and mark the
  * point where the source changes (spec: never silently join sources).

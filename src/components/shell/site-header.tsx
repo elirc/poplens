@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/session";
 import { MobileNav } from "./mobile-nav";
+import { HeaderAccount } from "./header-account";
 
 const NAV = [
   { href: "/explore", label: "Map" },
@@ -12,15 +12,11 @@ const NAV = [
   { href: "/stories", label: "Stories" },
 ];
 
-export async function SiteHeader() {
-  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
-  try {
-    user = await getCurrentUser();
-  } catch {
-    user = null;
-  }
-  const isStaff =
-    user && ["data_editor", "content_editor", "admin"].includes(user.role);
+/**
+ * Stateless server shell + a client-side account corner (HeaderAccount), so
+ * chromed public pages remain static/ISR-cacheable.
+ */
+export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
@@ -40,29 +36,7 @@ export async function SiteHeader() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
-          {isStaff && (
-            <Link
-              href={user!.role === "content_editor" ? "/editor/content" : "/editor"}
-              className="hidden text-muted-foreground hover:text-foreground sm:inline"
-            >
-              Staff
-            </Link>
-          )}
-          {user ? (
-            <Link
-              href="/account"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {user.name || "Account"}
-            </Link>
-          ) : (
-            <Link
-              href="/sign-in"
-              className="rounded-md border border-border px-3 py-1.5 hover:bg-muted"
-            >
-              Sign in
-            </Link>
-          )}
+          <HeaderAccount />
           <MobileNav items={NAV} />
         </div>
       </div>
