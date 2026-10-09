@@ -19,15 +19,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "pnpm db:migrate && pnpm start"
+    # The production build prerenders public pages from the database, so the
+    # build runs here (db reachable), not at image-build time. First boot
+    # takes several minutes; later boots reuse the cached .next volume.
+    command: sh -c "pnpm db:migrate && pnpm build && pnpm start"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/poplens_dev
       APP_URL: http://localhost:3000
-      AUTH_MODE: mock
       NODE_ENV: production
-      AUTH_SECRET: compose-demo-secret-not-for-real-use
+      # All ADAPTERs default to mock (no external calls). AUTH_MODE must be
+      # real in production — the app refuses to start otherwise — and that
+      # only controls the refusal; auth still works fully offline.
+      AUTH_MODE: real
+      AUTH_SECRET: compose-demo-secret-0123456789abcdefghijklmnop
     ports:
       - "3000:3000"
+    volumes:
+      - nextbuild:/app/.next
     depends_on:
       db:
         condition: service_healthy
@@ -40,11 +48,13 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/poplens_dev
       APP_URL: http://localhost:3000
-      AUTH_MODE: mock
-      AUTH_SECRET: compose-demo-secret-not-for-real-use
+      NODE_ENV: production
+      AUTH_MODE: real
+      AUTH_SECRET: compose-demo-secret-0123456789abcdefghijklmnop
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgdata:
+  nextbuild:

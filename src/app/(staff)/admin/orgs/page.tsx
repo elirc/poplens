@@ -122,8 +122,11 @@ export default async function AdminOrgsPage({
         id: schema.organization.id,
         name: schema.organization.name,
         createdAt: schema.organization.createdAt,
-        members: sql<number>`(SELECT count(*)::int FROM members m WHERE m.organization_id = ${schema.organization.id})`,
-        plan: sql<string | null>`(SELECT s.plan_code FROM subscriptions s WHERE s.organization_id = ${schema.organization.id} AND s.status = 'active' ORDER BY s.id DESC LIMIT 1)`,
+        // Qualified by hand: drizzle renders the interpolated column ref
+        // unqualified inside a scalar subquery, where bare "id" resolves to
+        // the subquery's own table (wrong counts / `text = integer` 500).
+        members: sql<number>`(SELECT count(*)::int FROM members m WHERE m.organization_id = "organizations"."id")`,
+        plan: sql<string | null>`(SELECT s.plan_code FROM subscriptions s WHERE s.organization_id = "organizations"."id" AND s.status = 'active' ORDER BY s.id DESC LIMIT 1)`,
       })
       .from(schema.organization)
       .where(where)

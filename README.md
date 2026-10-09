@@ -38,8 +38,13 @@ pnpm dev                     # web on http://localhost:3000
 pnpm worker:dev              # the queue worker (separate terminal)
 ```
 
-Full Docker path: `docker compose up` (web + worker + PostGIS db), then run
-the seed once: `docker compose exec web pnpm seed`.
+Full Docker path: `docker compose up` (web + worker + PostGIS db — the first
+boot builds the app once the database is up, which takes a few minutes), then
+run the seed once: `docker compose exec web pnpm seed`. The compose demo runs
+with `AUTH_MODE=real` because the app refuses mock auth under
+`NODE_ENV=production`; every adapter still defaults to mock, so no external
+call is made. (The Docker path is written to spec but has not been exercised
+on the build machine, which has no Docker.)
 
 Demo accounts (seeded, mock mode): `admin@poplens.ng`/`admin1234`,
 `editor@poplens.ng`/`editor1234` (data editor), `writer@poplens.ng`/

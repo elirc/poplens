@@ -57,8 +57,13 @@ export function ChoroplethLayer(props: ChoroplethLayerProps) {
 
   const layers = (
     <>
+      {/* source must be EXPLICIT: react-map-gl v8's <Source> injects it by
+          cloning direct children only — these layers sit inside a fragment,
+          so without the prop addLayer fires sourceless and maplibre rejects
+          every layer (blank choropleths). */}
       <Layer
         id={`${id}-fill`}
+        source={id}
         type="fill"
         {...(sourceLayer ? { "source-layer": sourceLayer } : {})}
         beforeId={beforeId}
@@ -69,6 +74,7 @@ export function ChoroplethLayer(props: ChoroplethLayerProps) {
       />
       <Layer
         id={`${id}-line`}
+        source={id}
         type="line"
         {...(sourceLayer ? { "source-layer": sourceLayer } : {})}
         beforeId={beforeId}
@@ -80,6 +86,7 @@ export function ChoroplethLayer(props: ChoroplethLayerProps) {
       />
       <Layer
         id={`${id}-hover`}
+        source={id}
         type="line"
         {...(sourceLayer ? { "source-layer": sourceLayer } : {})}
         beforeId={beforeId}

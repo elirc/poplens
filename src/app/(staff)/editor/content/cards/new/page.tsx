@@ -12,9 +12,10 @@ export default async function NewCardPage() {
   const first = indicators.find((i) => i.code === "u5mr")?.code ?? indicators[0]?.code ?? "pop_total";
   return (
     <div>
-      <nav className="mb-3 text-xs text-muted-foreground">
-        <Link href="/editor/content" className="hover:text-foreground">Content</Link> / New insight card
+      <nav className="mb-1 text-xs text-muted-foreground">
+        <Link href="/editor/content" className="hover:text-foreground">Content</Link>
       </nav>
+      <h1 className="mb-3 text-xl font-semibold">New insight card</h1>
       <CardGenerator
         initial={{ title: "", slug: "", caption: "", spec: { kind: "top5", indicatorCode: first }, status: "draft" }}
         indicators={indicators}

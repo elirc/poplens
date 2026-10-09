@@ -38,10 +38,14 @@ export default async function AdminUsersPage({
   const where = conds.length ? and(...conds) : undefined;
 
   // Effective plan: own active subscription, else an active org subscription.
+  // The outer column must be qualified by hand: drizzle renders an
+  // interpolated column ref unqualified here, and inside the subquery a bare
+  // "id" resolves to the subquery's own table (s.id is an integer → the
+  // whole page 500s with `text = integer`).
   const planExpr = sql<string | null>`coalesce(
-    (SELECT s.plan_code FROM subscriptions s WHERE s.user_id = ${schema.user.id} AND s.status = 'active' ORDER BY s.id DESC LIMIT 1),
+    (SELECT s.plan_code FROM subscriptions s WHERE s.user_id = "users"."id" AND s.status = 'active' ORDER BY s.id DESC LIMIT 1),
     (SELECT s.plan_code FROM members m JOIN subscriptions s ON s.organization_id = m.organization_id
-      WHERE m.user_id = ${schema.user.id} AND s.status = 'active' ORDER BY s.id DESC LIMIT 1)
+      WHERE m.user_id = "users"."id" AND s.status = 'active' ORDER BY s.id DESC LIMIT 1)
   )`;
 
   const [rows, total] = await Promise.all([

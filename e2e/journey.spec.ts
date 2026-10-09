@@ -167,6 +167,9 @@ test("5. upload and publish a dataset as a data editor", async ({ browser }) => 
   await sourceSelect.selectOption(nbsValue ?? fallbackValue!);
   await page.locator("#title").fill(`E2E health insurance upload ${RUN}`);
   await page.locator("#seriesKey").fill(`e2e-health-insurance-${RUN}`);
+  // Test values are fabricated — mark the dataset synthetic so it is never
+  // presented as real NBS data (and keeps the demo banner honest).
+  await page.locator("#isSynthetic").check();
   await Promise.all([
     page.waitForURL(/\/editor\/(uploads|drafts)\/[^/]+/, {
       timeout: 120_000,

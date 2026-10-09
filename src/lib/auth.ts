@@ -53,6 +53,10 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/phone-number/send-otp": { window: 60, max: 3 },
+      // The header checks the session client-side on every page view; the
+      // default 30/min trips under fast navigation (or an office NAT) and
+      // makes signed-in users look signed out. Reads are cheap — be generous.
+      "/get-session": { window: 60, max: 300 },
     },
   },
   plugins: [

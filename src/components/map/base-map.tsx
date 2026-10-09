@@ -1,7 +1,7 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { ReactNode, Ref } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 import Map, {
   AttributionControl,
   NavigationControl,
@@ -56,6 +56,12 @@ export function BaseMap({
   label = "Map",
   ref,
 }: BaseMapProps) {
+  // Mount Source/Layer children only after the style has loaded. react-map-gl
+  // v8 has a race where a Layer added in the same commit as its parent Source
+  // fails with `missing required property "source"` and only recovers if
+  // something re-renders later — pages that never re-render (embeds) were
+  // left with a base map and no data layers.
+  const [styleReady, setStyleReady] = useState(false);
   return (
     <div
       className={`relative overflow-hidden rounded-lg border border-border ${className ?? "h-[60vh] min-h-[320px]"}`}
@@ -83,12 +89,15 @@ export function BaseMap({
         onMouseMove={onMouseMove}
         onMouseOut={onMouseOut}
         onMoveEnd={onMoveEnd}
-        onLoad={onLoad}
+        onLoad={() => {
+          setStyleReady(true);
+          onLoad?.();
+        }}
         style={{ width: "100%", height: "100%" }}
       >
         <NavigationControl position="top-right" showCompass={false} />
         <AttributionControl position="bottom-right" compact />
-        {children}
+        {styleReady ? children : null}
       </Map>
     </div>
   );
